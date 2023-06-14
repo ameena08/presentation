@@ -1,13 +1,12 @@
 package com.UST.firebasedemo;
 
 import com.google.api.core.ApiFuture;
-import com.google.cloud.firestore.DocumentReference;
-import com.google.cloud.firestore.DocumentSnapshot;
-import com.google.cloud.firestore.Firestore;
-import com.google.cloud.firestore.WriteResult;
+import com.google.cloud.firestore.*;
 import com.google.firebase.cloud.FirestoreClient;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 @Service
@@ -39,9 +38,31 @@ public class CRUDService {
         return "successfully updated :  " + crud.getDocumentId();
     }
 
-    public String deleteCRUD(String documentId) throws ExecutionException, InterruptedException{
+    public String deleteCRUD(String documentId) throws ExecutionException, InterruptedException {
         Firestore dbFirestore = FirestoreClient.getFirestore();
-        ApiFuture<WriteResult> writeResult = dbFirestore.collection("crud_user").document(documentId).delete();
-        return "successfully deleted  :  " + documentId;
+        DocumentReference documentReference = dbFirestore.collection("crud_user").document(documentId);
+        ApiFuture<WriteResult> future = documentReference.delete();
+        future.get();
+
+        return "successfully deleted: " + documentId;
     }
+
+
+    public List<CRUD> getallCRUD() throws ExecutionException, InterruptedException {
+        Firestore dbFirestore = FirestoreClient.getFirestore();
+        CollectionReference collectionReference = dbFirestore.collection("crud_user");
+        ApiFuture<QuerySnapshot> future = collectionReference.get();
+        QuerySnapshot querySnapshot = future.get();
+
+        List<CRUD> crudList = new ArrayList<>();
+        for (DocumentSnapshot document : querySnapshot.getDocuments()) {
+            if (document.exists()) {
+                CRUD crud = document.toObject(CRUD.class);
+                crudList.add(crud);
+            }
+        }
+
+        return crudList;
+    }
+
 }
